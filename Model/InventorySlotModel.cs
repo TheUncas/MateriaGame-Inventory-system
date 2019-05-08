@@ -119,9 +119,7 @@ public class InventorySlotModel<T> where T : IInventoriable
 
         //No item on the slot
         if (isAvailable || currentAmount == 0)
-        {
             return true;
-        }
 
         //If it's not the same item
         if (!pObject.Compare(objectReference))

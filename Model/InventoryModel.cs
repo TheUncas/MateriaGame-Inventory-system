@@ -17,7 +17,7 @@ public class InventoryModel<T> where T : IInventoriable
 {
 
     #region events
-    public InventoryModelEventHandler<T> onObjectAdded, onObjectRemoved, onObjectGot, onSlotCreated;
+    public InventoryModelEventHandler<T> onObjectAdded, onObjectRemoved, onObjectGot, onSlotCreated, onObjectReplace;
     #endregion
 
     #region Properties
@@ -94,6 +94,7 @@ public class InventoryModel<T> where T : IInventoriable
             if (slot.CanAddItem(pObject))
             {
                 slotToReturn = slot;
+                return slotToReturn;
             }
         }
 
@@ -108,7 +109,7 @@ public class InventoryModel<T> where T : IInventoriable
     public bool AddObject(T pObject)
     {
         InventorySlotModel<T> slotWhereAddItem = GetSlotToAddObject(pObject);
-
+        
         //If there is no slot
         if (slotWhereAddItem == null)
             return false;
@@ -226,11 +227,29 @@ public class InventoryModel<T> where T : IInventoriable
     /// <returns></returns>
     public T GetObjectAt(int pIndex)
     {
-        //Fire event
-        if (!Equals(onObjectGot, null))
-            onObjectGot(this, slots[pIndex]);
+        if (pIndex < numberOfSlot)
+        {
+            //Fire event
+            if (!Equals(onObjectGot, null))
+                onObjectGot(this, slots[pIndex]);
 
-        return slots[pIndex].objectReference;
+            return slots[pIndex].objectReference;
+        }
+        else
+            return default(T);
+    }
+
+    /// <summary>
+    /// Returns the pObject's index
+    /// </summary>
+    /// <param name="pObject"></param>
+    /// <returns></returns>
+    public int GetIndexObject(T pObject)
+    {
+        if (GetSlotWichContainsObject(pObject) != null)
+            return GetSlotWichContainsObject(pObject).index;
+        else
+            return -1;
     }
 
 
@@ -266,7 +285,35 @@ public class InventoryModel<T> where T : IInventoriable
         //Fire event
         if (!Equals(onObjectAdded, null))
             onObjectGot(this, slot);
+        if (slot != null)
+            return slot.objectReference;
+        else
+            return default(T);
+    }
 
-        return slot.objectReference;
+    /// <summary>
+    /// Replace in inventory pObject1 by pObject2.
+    /// </summary>
+    /// <param name="pObject1"></param>
+    /// <param name="pObject2"></param>
+    public void ReplaceObjectAt(T pObject1, T pObject2)
+    {
+        if (GetSlotWichContainsObject(pObject1) != null)
+        {
+            int _indexToReplace = GetSlotWichContainsObject(pObject1).index;
+
+            slots[_indexToReplace] = new InventorySlotModel<T>(_indexToReplace, pObject2, 1);
+
+            // Fire event only if there is subscribes
+            if (!Equals(onObjectReplace, null))
+                onObjectReplace(this, slots[_indexToReplace]);
+        }
+    }
+
+    public void RemoveObject(T pObject)
+    {
+        InventorySlotModel<T> _slot = GetSlotWichContainsObject(pObject);
+
+        _slot.ClearSlot();
     }
 }
